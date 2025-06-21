@@ -27,6 +27,37 @@ def criar_tabela():
     conn.commit()
     conn.close()
 
+# Endpoint para editar entrega pelo id
+@app.route('/editar_entrega/<int:id>', methods=['PUT'])
+def editar_entrega(id):
+    try:
+        data = request.json
+        conn = db_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            UPDATE entregas
+            SET caixa_nome = ?, nota = ?, taxa_entrega = ?
+            WHERE id = ?
+        ''', (data['caixa_nome'], data['nota'], data['taxa_entrega'], id))
+        conn.commit()
+        conn.close()
+        return jsonify({"message": "Entrega atualizada com sucesso"})
+    except Exception as e:
+        return jsonify({"error": f"Erro ao atualizar entrega: {str(e)}"}), 500
+
+# Endpoint para excluir entrega pelo id
+@app.route('/excluir_entrega/<int:id>', methods=['DELETE'])
+def excluir_entrega(id):
+    try:
+        conn = db_connection()
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM entregas WHERE id = ?', (id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"message": "Entrega excluída com sucesso"})
+    except Exception as e:
+        return jsonify({"error": f"Erro ao excluir entrega: {str(e)}"}), 500
+
 # Endpoint para registrar nova entrega
 @app.route('/nova_entrega', methods=['POST'])
 def nova_entrega():
@@ -44,17 +75,16 @@ def nova_entrega():
     except Exception as e:
         return jsonify({"error": f"Erro ao registrar entrega: {str(e)}"}), 500
 
-# Endpoint para gerar relatório
+# Endpoint para gerar relatório (com filtro e incluindo id)
 @app.route('/relatorio', methods=['GET'])
 def relatorio():
     try:
-        # Parâmetros opcionais de filtro
         data_inicial = request.args.get('data_inicial')
         data_final = request.args.get('data_final')
         caixa_nome = request.args.get('caixa_nome')
 
         query = '''
-            SELECT caixa_nome, nota, taxa_entrega, data_hora
+            SELECT id, caixa_nome, nota, taxa_entrega, data_hora
             FROM entregas
             WHERE 1=1
         '''
