@@ -1,9 +1,10 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS  # Importar suporte ao CORS
+from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 import sqlite3
+import os
 
 app = Flask(__name__)
-CORS(app)  # Habilitar CORS para permitir conexões externas
+CORS(app)
 
 # Função para conectar ao banco de dados
 def db_connection():
@@ -27,7 +28,11 @@ def criar_tabela():
     conn.commit()
     conn.close()
 
-# Endpoint para editar entrega pelo id
+# Rota para servir o index.html
+@app.route('/')
+def index():
+    return send_from_directory('static', 'index.html')
+# Endpoint para editar entrega pelo ID
 @app.route('/editar_entrega/<int:id>', methods=['PUT'])
 def editar_entrega(id):
     try:
@@ -45,7 +50,7 @@ def editar_entrega(id):
     except Exception as e:
         return jsonify({"error": f"Erro ao atualizar entrega: {str(e)}"}), 500
 
-# Endpoint para excluir entrega pelo id
+# Endpoint para excluir entrega pelo ID
 @app.route('/excluir_entrega/<int:id>', methods=['DELETE'])
 def excluir_entrega(id):
     try:
@@ -75,7 +80,7 @@ def nova_entrega():
     except Exception as e:
         return jsonify({"error": f"Erro ao registrar entrega: {str(e)}"}), 500
 
-# Endpoint para gerar relatório (com filtro e incluindo id)
+# Endpoint para gerar relatório com filtros
 @app.route('/relatorio', methods=['GET'])
 def relatorio():
     try:
