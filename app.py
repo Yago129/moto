@@ -3,7 +3,7 @@ from flask_cors import CORS
 import sqlite3
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')  # Define 'static' como pasta de arquivos estáticos
 CORS(app)
 
 # Função para conectar ao banco de dados
@@ -28,10 +28,16 @@ def criar_tabela():
     conn.commit()
     conn.close()
 
-# Rota para servir o index.html
+# Rota para servir o index.html na raiz
 @app.route('/')
 def index():
-    return send_from_directory('static', 'index.html')
+    return send_from_directory(app.static_folder, 'index.html')
+
+# Rota para servir arquivos estáticos (JS, CSS, imagens, favicon, etc)
+@app.route('/<path:path>')
+def static_files(path):
+    return send_from_directory(app.static_folder, path)
+
 # Endpoint para editar entrega pelo ID
 @app.route('/editar_entrega/<int:id>', methods=['PUT'])
 def editar_entrega(id):
