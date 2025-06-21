@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Sistema de Entregas</title>
+</head>
+<body class="bg-gray-100 text-gray-900">
+    <div class="container mx-auto p-4">
+        <h1 class="text-xl font-bold mb-4">Sistema de Entregas</h1>
+
+        <!-- Formulário de Registro -->
+        <div class="bg-white p-4 rounded-lg shadow">
+            <h2 class="text-lg font-bold">Registrar Entrega</h2>
+            <form id="formEntrega" onsubmit="return false;">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium">Nome do Caixa</label>
+                    <input type="text" id="caixa" class="border border-gray-300 rounded-lg w-full p-2" placeholder="Ex: João">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium">Nota/Descrição</label>
+                    <textarea id="nota" class="border border-gray-300 rounded-lg w-full p-2" placeholder="Detalhes da entrega"></textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium">Taxa de Entrega (R$)</label>
+                    <input type="number" id="taxa" class="border border-gray-300 rounded-lg w-full p-2" placeholder="Ex: 10.50">
+                </div>
+                <button onclick="registrarEntrega()" class="bg-blue-500 text-white px-4 py-2 rounded-lg">Salvar Entrega</button>
+            </form>
+        </div>
+
+        <!-- Filtros e Relatório -->
+        <div class="bg-white p-4 rounded-lg shadow mt-6">
+            <h2 class="text-lg font-bold">Relatório</h2>
+            <div class="mb-4">
+                <label>Data Inicial</label>
+                <input type="date" id="data_inicial" class="border border-gray-300 rounded-lg w-full p-2 mb-2">
+            </div>
+            <div class="mb-4">
+                <label>Data Final</label>
+                <input type="date" id="data_final" class="border border-gray-300 rounded-lg w-full p-2 mb-2">
+            </div>
+            <div class="mb-4">
+                <label>Caixa</label>
+                <input type="text" id="caixa_filtro" class="border border-gray-300 rounded-lg w-full p-2 mb-2" placeholder="Filtrar por caixa">
+            </div>
+            <button onclick="mostrarRelatorio()" class="bg-green-500 text-white px-4 py-2 rounded-lg">Gerar Relatório</button>
+            <div id="relatorio" class="mt-4"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:5000';
+
+        // Função para registrar uma nova entrega
+        async function registrarEntrega() {
+            const caixa = document.getElementById('caixa').value;
+            const nota = document.getElementById('nota').value;
+            const taxa = parseFloat(document.getElementById('taxa').value);
+
+            if (!caixa || !nota || isNaN(taxa)) {
+                alert("Por favor, preencha todos os campos!");
+                return;
+            }
+
+            const data = { caixa_nome: caixa, nota: nota, taxa_entrega: taxa };
+
+            try {
+                const response = await fetch(`${API_URL}/nova_entrega`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    alert(result.message);
+                    document.getElementById('formEntrega').reset();
+                } else {
+                    alert("Erro ao salvar entrega: " + result.error);
+                }
+            } catch (error) {
+                alert("Erro ao conectar com o servidor!");
+            }
+        }
+
+        // Função para mostrar o relatório com filtros
+        async function mostrarRelatorio() {
+            const dataInicial = document.getElementById('data_inicial').value;
+            const dataFinal = document.getElementById('data_final').value;
+            const caixaFiltro = document.getElementById('caixa_filtro').value;
+
+            const query = new URLSearchParams({
+                data_inicial: dataInicial || '',
+                data_final: dataFinal || '',
+                caixa_nome: caixaFiltro || ''
+            });
+
+            try {
+                const response = await fetch(`${API_URL}/relatorio?${query}`);
+                const result = await response.json();
+
+                if (response.ok) {
+                    let html = '<ul>';
+                    result.entregas.forEach(e => {
+                        html += `<li>${e.caixa_nome} - ${e.nota} - R$${e.taxa_entrega.toFixed(2)} - ${e.data_hora}</li>`;
+                    });
+                    html += '</ul>';
+                    html += `<p><strong>Total: R$${result.total.toFixed(2)}</strong></p>`;
+                    document.getElementById('relatorio').innerHTML = html;
+                } else {
+                    alert("Erro ao gerar relatório: " + result.error);
+                }
+            } catch (error) {
+                alert("Erro ao conectar com o servidor!");
+            }
+        }
+    </script>
+</body>
+</html>
