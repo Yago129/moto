@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://cdn.tailwindcss.com"></script>
     <title>Sistema de Entregas</title>
 </head>
@@ -16,17 +16,36 @@
             <form id="formEntrega" onsubmit="return false;">
                 <div class="mb-4">
                     <label class="block text-sm font-medium">Nome do Caixa</label>
-                    <input type="text" id="caixa" class="border border-gray-300 rounded-lg w-full p-2" placeholder="Ex: João">
+                    <input
+                        type="text"
+                        id="caixa"
+                        class="border border-gray-300 rounded-lg w-full p-2"
+                        placeholder="Ex: João"
+                    />
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium">Nota/Descrição</label>
-                    <textarea id="nota" class="border border-gray-300 rounded-lg w-full p-2" placeholder="Detalhes da entrega"></textarea>
+                    <textarea
+                        id="nota"
+                        class="border border-gray-300 rounded-lg w-full p-2"
+                        placeholder="Detalhes da entrega"
+                    ></textarea>
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium">Taxa de Entrega (R$)</label>
-                    <input type="number" id="taxa" class="border border-gray-300 rounded-lg w-full p-2" placeholder="Ex: 10.50">
+                    <input
+                        type="number"
+                        id="taxa"
+                        class="border border-gray-300 rounded-lg w-full p-2"
+                        placeholder="Ex: 10.50"
+                    />
                 </div>
-                <button onclick="registrarEntrega()" class="bg-blue-500 text-white px-4 py-2 rounded-lg">Salvar Entrega</button>
+                <button
+                    onclick="registrarEntrega()"
+                    class="bg-blue-500 text-white px-4 py-2 rounded-lg"
+                >
+                    Salvar Entrega
+                </button>
             </form>
         </div>
 
@@ -35,17 +54,35 @@
             <h2 class="text-lg font-bold">Relatório</h2>
             <div class="mb-4">
                 <label>Data Inicial</label>
-                <input type="date" id="data_inicial" class="border border-gray-300 rounded-lg w-full p-2 mb-2">
+                <input
+                    type="date"
+                    id="data_inicial"
+                    class="border border-gray-300 rounded-lg w-full p-2 mb-2"
+                />
             </div>
             <div class="mb-4">
                 <label>Data Final</label>
-                <input type="date" id="data_final" class="border border-gray-300 rounded-lg w-full p-2 mb-2">
+                <input
+                    type="date"
+                    id="data_final"
+                    class="border border-gray-300 rounded-lg w-full p-2 mb-2"
+                />
             </div>
             <div class="mb-4">
                 <label>Caixa</label>
-                <input type="text" id="caixa_filtro" class="border border-gray-300 rounded-lg w-full p-2 mb-2" placeholder="Filtrar por caixa">
+                <input
+                    type="text"
+                    id="caixa_filtro"
+                    class="border border-gray-300 rounded-lg w-full p-2 mb-2"
+                    placeholder="Filtrar por caixa"
+                />
             </div>
-            <button onclick="mostrarRelatorio()" class="bg-green-500 text-white px-4 py-2 rounded-lg">Gerar Relatório</button>
+            <button
+                onclick="mostrarRelatorio()"
+                class="bg-green-500 text-white px-4 py-2 rounded-lg"
+            >
+                Gerar Relatório
+            </button>
             <div id="relatorio" class="mt-4"></div>
         </div>
     </div>
@@ -53,47 +90,44 @@
     <script>
         const API_URL = 'http://127.0.0.1:5000';
 
-        // Função para registrar uma nova entrega
         async function registrarEntrega() {
-            const caixa = document.getElementById('caixa').value;
-            const nota = document.getElementById('nota').value;
+            const caixa = document.getElementById('caixa').value.trim();
+            const nota = document.getElementById('nota').value.trim();
             const taxa = parseFloat(document.getElementById('taxa').value);
 
             if (!caixa || !nota || isNaN(taxa)) {
-                alert("Por favor, preencha todos os campos!");
+                alert('Por favor, preencha todos os campos corretamente!');
                 return;
             }
-
-            const data = { caixa_nome: caixa, nota: nota, taxa_entrega: taxa };
 
             try {
                 const response = await fetch(`${API_URL}/nova_entrega`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify({ caixa_nome: caixa, nota, taxa_entrega: taxa }),
                 });
                 const result = await response.json();
                 if (response.ok) {
                     alert(result.message);
                     document.getElementById('formEntrega').reset();
+                    mostrarRelatorio(); // Atualiza relatório após inserir
                 } else {
-                    alert("Erro ao salvar entrega: " + result.error);
+                    alert('Erro ao salvar entrega: ' + (result.error || ''));
                 }
-            } catch (error) {
-                alert("Erro ao conectar com o servidor!");
+            } catch {
+                alert('Erro ao conectar com o servidor!');
             }
         }
 
-        // Função para mostrar o relatório com filtros
         async function mostrarRelatorio() {
             const dataInicial = document.getElementById('data_inicial').value;
             const dataFinal = document.getElementById('data_final').value;
-            const caixaFiltro = document.getElementById('caixa_filtro').value;
+            const caixaFiltro = document.getElementById('caixa_filtro').value.trim();
 
             const query = new URLSearchParams({
                 data_inicial: dataInicial || '',
                 data_final: dataFinal || '',
-                caixa_nome: caixaFiltro || ''
+                caixa_nome: caixaFiltro || '',
             });
 
             try {
@@ -101,20 +135,89 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    let html = '<ul>';
-                    result.entregas.forEach(e => {
-                        html += `<li>${e.caixa_nome} - ${e.nota} - R$${e.taxa_entrega.toFixed(2)} - ${e.data_hora}</li>`;
+                    let html = '<table class="w-full text-left border-collapse">';
+                    html +=
+                        '<thead><tr class="border-b"><th class="p-2">Caixa</th><th class="p-2">Nota</th><th class="p-2">Taxa (R$)</th><th class="p-2">Data/Hora</th><th class="p-2">Ações</th></tr></thead><tbody>';
+
+                    result.entregas.forEach((e) => {
+                        html += `<tr class="border-b hover:bg-gray-100">
+                            <td class="p-2">${e.caixa_nome}</td>
+                            <td class="p-2">${e.nota}</td>
+                            <td class="p-2">R$${e.taxa_entrega.toFixed(2)}</td>
+                            <td class="p-2">${e.data_hora}</td>
+                            <td class="p-2 space-x-2">
+                                <button
+                                    onclick="editarEntrega(${e.id})"
+                                    class="bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-1 rounded"
+                                >
+                                    Editar
+                                </button>
+                                <button
+                                    onclick="excluirEntrega(${e.id})"
+                                    class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                                >
+                                    Excluir
+                                </button>
+                            </td>
+                        </tr>`;
                     });
-                    html += '</ul>';
-                    html += `<p><strong>Total: R$${result.total.toFixed(2)}</strong></p>`;
+
+                    html += '</tbody></table>';
+                    html += `<p class="mt-4 font-bold">Total: R$${result.total.toFixed(2)}</p>`;
                     document.getElementById('relatorio').innerHTML = html;
                 } else {
-                    alert("Erro ao gerar relatório: " + result.error);
+                    alert('Erro ao gerar relatório: ' + (result.error || ''));
                 }
-            } catch (error) {
-                alert("Erro ao conectar com o servidor!");
+            } catch {
+                alert('Erro ao conectar com o servidor!');
             }
         }
+
+        async function excluirEntrega(id) {
+            if (!confirm('Tem certeza que deseja excluir esta entrega?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/excluir_entrega/${id}`, {
+                    method: 'DELETE',
+                });
+                const result = await response.json();
+                alert(result.message || 'Erro ao excluir');
+                mostrarRelatorio();
+            } catch {
+                alert('Erro ao conectar com o servidor!');
+            }
+        }
+
+        async function editarEntrega(id) {
+            // Pede os novos dados via prompt para simplificar
+            const caixa_nome = prompt('Novo nome do caixa:');
+            if (caixa_nome === null) return; // Cancelou
+            const nota = prompt('Nova nota/descrição:');
+            if (nota === null) return;
+            const taxaStr = prompt('Nova taxa de entrega (R$):');
+            if (taxaStr === null) return;
+            const taxa_entrega = parseFloat(taxaStr);
+            if (!caixa_nome.trim() || !nota.trim() || isNaN(taxa_entrega)) {
+                alert('Dados inválidos! Preencha corretamente.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/editar_entrega/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ caixa_nome, nota, taxa_entrega }),
+                });
+                const result = await response.json();
+                alert(result.message || 'Erro ao editar entrega');
+                mostrarRelatorio();
+            } catch {
+                alert('Erro ao conectar com o servidor!');
+            }
+        }
+
+        // Carrega relatório ao iniciar a página
+        mostrarRelatorio();
     </script>
 </body>
 </html>
