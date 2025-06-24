@@ -88,7 +88,12 @@
     </div>
 
     <script>
-        const API_URL = 'https://moto-p7zbge1rq-yagos-projects-2ce0e066.vercel.app';
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://127.0.0.1:5000'
+    : 'https://moto-mauve.vercel.app';
+
+
+
 
 
         async function registrarEntrega() {
