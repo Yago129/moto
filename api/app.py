@@ -1,9 +1,12 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, abort
 from flask_cors import CORS
 import sqlite3
 import os
 
-app = Flask(__name__, static_folder='static')  # Define 'static' como pasta de arquivos estáticos
+# Define o caminho absoluto da pasta static na raiz do projeto
+STATIC_FOLDER = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'static'))
+
+app = Flask(__name__, static_folder=STATIC_FOLDER)  # Pasta de arquivos estáticos configurada corretamente
 CORS(app)
 
 # Função para conectar ao banco de dados
@@ -12,7 +15,7 @@ def db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
-# Criar a tabela se não existir
+# Criar tabela se não existir
 def criar_tabela():
     conn = db_connection()
     cursor = conn.cursor()
@@ -28,17 +31,22 @@ def criar_tabela():
     conn.commit()
     conn.close()
 
-# Rota para servir o index.html na raiz
+# Serve index.html na raiz
 @app.route('/')
 def index():
     return send_from_directory(app.static_folder, 'index.html')
 
-# Rota para servir arquivos estáticos (JS, CSS, imagens, favicon, etc)
-@app.route('/<path:path>')
-def static_files(path):
-    return send_from_directory(app.static_folder, path)
+# Serve arquivos estáticos (JS, CSS, favicon etc)
+@app.route('/<path:filename>')
+def static_files(filename):
+    # Evita conflito com rotas da API (ex: /nova_entrega)
+    api_routes = ['nova_entrega', 'relatorio', 'editar_entrega', 'excluir_entrega']
+    if any(filename.startswith(route) for route in api_routes):
+        abort(404)  # Não serve arquivo estático para rotas da API
+    return send_from_directory(app.static_folder, filename)
 
-# Endpoint para editar entrega pelo ID
+# API endpoints abaixo
+
 @app.route('/editar_entrega/<int:id>', methods=['PUT'])
 def editar_entrega(id):
     try:
@@ -56,7 +64,6 @@ def editar_entrega(id):
     except Exception as e:
         return jsonify({"error": f"Erro ao atualizar entrega: {str(e)}"}), 500
 
-# Endpoint para excluir entrega pelo ID
 @app.route('/excluir_entrega/<int:id>', methods=['DELETE'])
 def excluir_entrega(id):
     try:
@@ -69,7 +76,6 @@ def excluir_entrega(id):
     except Exception as e:
         return jsonify({"error": f"Erro ao excluir entrega: {str(e)}"}), 500
 
-# Endpoint para registrar nova entrega
 @app.route('/nova_entrega', methods=['POST'])
 def nova_entrega():
     try:
@@ -86,7 +92,6 @@ def nova_entrega():
     except Exception as e:
         return jsonify({"error": f"Erro ao registrar entrega: {str(e)}"}), 500
 
-# Endpoint para gerar relatório com filtros
 @app.route('/relatorio', methods=['GET'])
 def relatorio():
     try:
